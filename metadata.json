@@ -1,0 +1,7 @@
+{
+  "name": "Açaí Express Pro",
+  "description": "Sistema premium de cardápio digital para açaiterias com integração via WhatsApp e painel administrativo completo.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
