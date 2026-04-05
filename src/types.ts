@@ -15,6 +15,12 @@ export interface ProductVariation {
   price: number;
 }
 
+export interface AddonItem {
+  id: string;
+  name: string;
+  price: number;
+}
+
 export interface AddonGroup {
   id: string;
   name: string;
@@ -38,6 +44,8 @@ export interface Product {
   image: string;
   status: ProductStatus;
   featured: boolean;
+  isBestSeller?: boolean;
+  isPromo?: boolean;
   variations?: ProductVariation[]; // e.g. Sizes
   addonGroups?: AddonGroup[];
 }
@@ -84,6 +92,18 @@ export interface Order {
   status: OrderStatus;
   createdAt: string;
   observations?: string;
+}
+
+export interface Neighborhood {
+  id: string;
+  name: string;
+  deliveryFee: number;
+}
+
+export interface Neighborhood {
+  id: string;
+  name: string;
+  deliveryFee: number;
 }
 
 export interface StoreConfig {

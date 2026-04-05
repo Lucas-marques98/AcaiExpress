@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 interface CartContextType {
   cart: CartItem[];
   addToCart: (product: Product, variation?: ProductVariation, addons?: { groupId: string; groupName: string; items: AddonItem[] }[], observations?: string, quantity?: number) => void;
+  updateCartItem: (oldCartItemId: string, product: Product, variation?: ProductVariation, addons?: { groupId: string; groupName: string; items: AddonItem[] }[], observations?: string, quantity?: number) => void;
   removeFromCart: (cartItemId: string) => void;
   updateQuantity: (cartItemId: string, delta: number) => void;
   clearCart: () => void;
@@ -61,6 +62,51 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toast.success(`${product.name} adicionado ao carrinho!`);
   };
 
+  const updateCartItem = (
+    oldCartItemId: string,
+    product: Product,
+    variation?: ProductVariation,
+    addons: { groupId: string; groupName: string; items: AddonItem[] }[] = [],
+    observations: string = '',
+    quantity: number = 1
+  ) => {
+    const basePrice = variation ? variation.price : product.price;
+    const addonsPrice = addons.reduce((acc, group) => 
+      acc + group.items.reduce((groupAcc, item) => groupAcc + item.price, 0), 0
+    );
+    const unitPrice = basePrice + addonsPrice;
+    
+    const newCartItemId = `${product.id}-${variation?.id || 'base'}-${addons.map(g => g.items.map(i => i.id).join(',')).join('|')}-${observations}`;
+
+    setCart(prev => {
+      const newCart = prev.filter(item => item.id !== oldCartItemId);
+      const existingItemIndex = newCart.findIndex(item => item.id === newCartItemId);
+      
+      if (existingItemIndex > -1) {
+        newCart[existingItemIndex].quantity += quantity;
+        newCart[existingItemIndex].totalPrice = newCart[existingItemIndex].quantity * unitPrice;
+        return newCart;
+      }
+
+      const newItem: CartItem = {
+        id: newCartItemId,
+        productId: product.id,
+        name: product.name,
+        image: product.image,
+        variation,
+        addons,
+        quantity,
+        price: unitPrice,
+        totalPrice: unitPrice * quantity,
+        observations
+      };
+
+      return [...newCart, newItem];
+    });
+
+    toast.success(`Item atualizado com sucesso!`);
+  };
+
   const removeFromCart = (cartItemId: string) => {
     setCart(prev => prev.filter(item => item.id !== cartItemId));
   };
@@ -81,7 +127,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, cartTotal, cartCount }}>
+    <CartContext.Provider value={{ cart, addToCart, updateCartItem, removeFromCart, updateQuantity, clearCart, cartTotal, cartCount }}>
       {children}
     </CartContext.Provider>
   );
