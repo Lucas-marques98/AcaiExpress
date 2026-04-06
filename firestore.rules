@@ -1,0 +1,128 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Fields: id, name, email, role, storeId
+    //
+    // Collection: stores
+    // Fields: id, name, slug, segment, logo, banner, primaryColor, secondaryColor, 
+    //         whatsapp, address, minOrderValue, deliveryTime, isOpen, status, 
+    //         openingHours, createdAt, planId, subscriptionId, onboardingStatus, 
+    //         billingStatus, monthlyFee, setupFee, startDate, nextBillingDate
+    //
+    // Collection: plans
+    // Fields: id, name, monthlyPrice, setupPrice, description, productLimit, bannerLimit, adminLimit, allowedSegments, features, active
+    //
+    // Collection: products
+    // Fields: id, storeId, categoryId, name, description, price, image, status, featured, isBestSeller, isPromo, variations, addonGroups
+    //
+    // Collection: categories
+    // Fields: id, storeId, name, slug, icon, order, active
+    //
+    // Collection: orders
+    // Fields: id, storeId, customerName, customerPhone, address, deliveryMethod, paymentMethod, changeFor, items, subtotal, deliveryFee, total, status, createdAt, observations
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isSuperAdmin() {
+      return isAuthenticated() && getUserData().role == 'SUPER_ADMIN';
+    }
+
+    function isStoreAdmin(storeId) {
+      return isAuthenticated() && 
+             (getUserData().role == 'STORE_ADMIN' && getUserData().storeId == storeId) || 
+             isSuperAdmin();
+    }
+
+    function isStoreActive(storeId) {
+      let store = get(/databases/$(database)/documents/stores/$(storeId)).data;
+      return store.status == 'active' || store.billingStatus == 'active' || store.billingStatus == 'trial';
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isSuperAdmin());
+      allow write: if isSuperAdmin() || (isAuthenticated() && request.auth.uid == userId && !('role' in request.resource.data));
+    }
+
+    // Stores collection
+    match /stores/{storeId} {
+      allow read: if true; // Publicly readable for the menu
+      allow write: if isSuperAdmin();
+      allow update: if isStoreAdmin(storeId);
+    }
+
+    // Plans collection
+    match /plans/{planId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    // Products collection
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isStoreAdmin(request.resource.data.storeId);
+      allow update, delete: if isStoreAdmin(resource.data.storeId);
+    }
+
+    // Categories collection
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isStoreAdmin(request.resource.data.storeId);
+      allow update, delete: if isStoreAdmin(resource.data.storeId);
+    }
+
+    // Orders collection
+    match /orders/{orderId} {
+      allow read: if isStoreAdmin(resource.data.storeId);
+      allow create: if true; // Public can create orders
+      allow update: if isStoreAdmin(resource.data.storeId);
+    }
+
+    // Neighborhoods collection
+    match /neighborhoods/{id} {
+      allow read: if true;
+      allow write: if isStoreAdmin(request.resource.data.storeId);
+      allow update, delete: if isStoreAdmin(resource.data.storeId);
+    }
+
+    // Subscriptions collection
+    match /subscriptions/{id} {
+      allow read: if isStoreAdmin(resource.data.storeId);
+      allow write: if isSuperAdmin();
+    }
+
+    // Onboarding collection
+    match /onboarding/{id} {
+      allow read: if isStoreAdmin(resource.data.storeId);
+      allow write: if isSuperAdmin();
+      allow update: if isStoreAdmin(resource.data.storeId);
+    }
+
+    // Billing collection
+    match /billing/{id} {
+      allow read: if isStoreAdmin(resource.data.storeId);
+      allow write: if isSuperAdmin();
+    }
+  }
+}

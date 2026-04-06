@@ -25,7 +25,7 @@ import { DeliveryMethod, PaymentMethod } from '../types';
 export const Checkout: React.FC = () => {
   const navigate = useNavigate();
   const { cart, cartTotal, clearCart } = useCart();
-  const { storeConfig, neighborhoods, addOrder } = useStore();
+  const { currentStore, neighborhoods, addOrder } = useStore();
   
   const [step, setStep] = useState<'details' | 'confirmation'>('details');
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('delivery');
@@ -38,7 +38,7 @@ export const Checkout: React.FC = () => {
 
   const selectedNeighborhood = useMemo(() => 
     neighborhoods.find(n => n.id === address.neighborhoodId),
-    [address.neighborhoodId]
+    [address.neighborhoodId, neighborhoods]
   );
 
   const deliveryFee = deliveryMethod === 'delivery' ? (selectedNeighborhood?.deliveryFee || 0) : 0;
@@ -125,7 +125,7 @@ export const Checkout: React.FC = () => {
       `_Pedido gerado via Cardápio Digital_`
     );
 
-    window.open(`https://wa.me/${storeConfig.whatsapp}?text=${message}`, '_blank');
+    window.open(`https://wa.me/${currentStore?.whatsapp}?text=${message}`, '_blank');
     
     addOrder({
       items: cart,
@@ -134,8 +134,16 @@ export const Checkout: React.FC = () => {
       customerPhone,
       deliveryMethod,
       paymentMethod,
-      address: deliveryMethod === 'delivery' ? address : undefined,
-      observations: orderObservations
+      address: deliveryMethod === 'delivery' ? {
+        street: address.street,
+        number: address.number,
+        neighborhood: selectedNeighborhood?.name || '',
+        complement: address.complement,
+        reference: address.reference
+      } : undefined,
+      observations: orderObservations,
+      subtotal: cartTotal,
+      deliveryFee: deliveryFee
     });
 
     toast.success('Pedido enviado com sucesso!');

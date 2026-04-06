@@ -1,6 +1,6 @@
 {
-  "name": "Açaí Express Pro",
-  "description": "Sistema premium de cardápio digital para açaiterias com integração via WhatsApp e painel administrativo completo.",
+  "name": "MenuX Flex",
+  "description": "Plataforma SaaS premium de cardápio digital e pedidos para negócios locais. Gestão multiempresa, financeira e de assinaturas.",
   "requestFramePermissions": [
     "geolocation"
   ]

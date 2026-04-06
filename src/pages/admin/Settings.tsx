@@ -5,8 +5,17 @@ import { Button } from '../../components/Button';
 import { toast } from 'sonner';
 
 export const Settings: React.FC = () => {
-  const { storeConfig, updateStoreConfig } = useStore();
-  const [tempSettings, setTempSettings] = useState(storeConfig);
+  const { currentStore, updateStore } = useStore();
+  const [tempSettings, setTempSettings] = useState(currentStore);
+
+  const handleSave = async () => {
+    if (currentStore && tempSettings) {
+      await updateStore(currentStore.id, tempSettings);
+      toast.success('Configurações salvas!');
+    }
+  };
+
+  if (!tempSettings) return null;
 
   return (
     <div className="space-y-6">
@@ -26,7 +35,7 @@ export const Settings: React.FC = () => {
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tempo Médio de Entrega (min)</label>
-              <input type="number" value={tempSettings.deliveryTime} onChange={(e) => setTempSettings({...tempSettings, deliveryTime: parseInt(e.target.value)})} className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-primary font-bold" />
+              <input type="text" value={tempSettings.deliveryTime} onChange={(e) => setTempSettings({...tempSettings, deliveryTime: e.target.value})} className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:border-primary font-bold" />
             </div>
           </div>
         </div>
@@ -49,7 +58,7 @@ export const Settings: React.FC = () => {
           </div>
         </div>
       </div>
-      <Button onClick={() => { updateStoreConfig(tempSettings); toast.success('Configurações salvas!'); }} className="w-full rounded-2xl py-4 text-lg">Salvar Todas as Alterações</Button>
+      <Button onClick={handleSave} className="w-full rounded-2xl py-4 text-lg">Salvar Todas as Alterações</Button>
     </div>
   );
 };

@@ -6,8 +6,15 @@ import { cn } from '../../lib/utils';
 import { toast } from 'sonner';
 
 export const OpeningHours: React.FC = () => {
-  const { storeConfig, updateOpeningHours } = useStore();
-  const [tempHours, setTempHours] = useState(storeConfig.openingHours);
+  const { currentStore, updateStore } = useStore();
+  const [tempHours, setTempHours] = useState(currentStore?.openingHours || []);
+
+  const handleSave = async () => {
+    if (currentStore) {
+      await updateStore(currentStore.id, { openingHours: tempHours });
+      toast.success('Horários salvos!');
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -57,7 +64,7 @@ export const OpeningHours: React.FC = () => {
             </div>
           ))}
         </div>
-        <Button onClick={() => { updateOpeningHours(tempHours); toast.success('Horários salvos!'); }} className="w-full mt-8 rounded-2xl py-4">Salvar Horários</Button>
+        <Button onClick={handleSave} className="w-full mt-8 rounded-2xl py-4">Salvar Horários</Button>
       </div>
     </div>
   );

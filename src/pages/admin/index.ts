@@ -8,4 +8,5 @@ export * from './Promotions';
 export * from './Coupons';
 export * from './OpeningHours';
 export * from './Customers';
+export * from './MyPlan';
 export * from './Settings';
